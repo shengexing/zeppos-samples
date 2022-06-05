@@ -2,6 +2,10 @@ export function isHmUIDefined() {
   return typeof hmUI !== 'undefined'
 }
 
+/**
+ * 返回 hmBle 是否被定义
+ * @returns hmBle BLE 通信模块
+ */
 export function isHmBleDefined() {
   return typeof hmBle !== 'undefined'
 }

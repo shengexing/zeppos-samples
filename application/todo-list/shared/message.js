@@ -58,6 +58,10 @@ export function getTimestamp(t = Date.now()) {
   return t % 10000000
 }
 
+/**
+ * 会话
+ * @class Session
+ */
 class Session extends EventBus {
   constructor(id, type, ctx) {
     super()
@@ -145,15 +149,36 @@ class Session extends EventBus {
   }
 }
 
+/**
+ * 会话消息
+ * @class SessionMgr
+ */
 class SessionMgr {
+
+  /**
+   * 构造器方法：
+   * 初始化一个成员变量会话 sessions<string, >
+   */
   constructor() {
     this.sessions = new Map()
   }
 
+  /**
+   * 获取 session 中的 key
+   * @param {object} session 会话
+   * @returns string
+   */
   key(session) {
     return `${session.id}:${session.type}`
   }
 
+  /**
+   * 新建会话
+   * @param {Number} id 
+   * @param {Number} type 
+   * @param {*} ctx 
+   * @returns 
+   */
   newSession(id, type, ctx) {
     const newSession = new Session(id, type, ctx)
     this.sessions.set(this.key(newSession), newSession)
@@ -178,7 +203,16 @@ class SessionMgr {
   }
 }
 
+/**
+ * 消息生成器
+ * @class MessageBuilder
+ */
 export class MessageBuilder extends EventBus {
+
+  /**
+   * 构造器方法：
+   * 初始化 appId(0), appDevicePort(20), appSidePort(0)
+   */
   constructor(
     { appId = 0, appDevicePort = 20, appSidePort = 0 } = {
       appId: 0,
@@ -187,17 +221,22 @@ export class MessageBuilder extends EventBus {
     },
   ) {
     super()
+    // 当前对象是否为设备
     this.isDevice = isHmBleDefined()
     this.isSide = !this.isDevice
 
     this.appId = appId
     this.appDevicePort = appDevicePort
     this.appSidePort = appSidePort
+    // 发送消息
     this.sendMsg = this.getSafeSend()
     this.chunkSize = 2000
     this.tempBuf = null
+    // 振动任务
     this.shakeTask = Deferred()
+    // 振动任务延迟
     this.waitingShakePromise = this.shakeTask.promise
+    //
     this.sessionMgr = new SessionMgr()
 
     if (isHmAppDefined() && DEBUG) {
@@ -402,6 +441,10 @@ export class MessageBuilder extends EventBus {
     return bin2json(bin)
   }
 
+  /**
+   * 发送二进制消息（通过 hmBle 发送）
+   * @param {object} buf 二进制消息
+   */
   sendBin(buf) {
     logger.warn(
       '[RAW] [S] send size=%d bin=%s',
@@ -411,6 +454,10 @@ export class MessageBuilder extends EventBus {
     hmBle.send(buf.buffer, buf.byteLength)
   }
 
+  /**
+   * 发送二进制消息 bySide（通过 messaging 发送）
+   * @param {object} buf 二进制消息
+   */
   sendBinBySide(buf) {
     logger.warn(
       '[RAW] [S] send size=%d bin=%s',
@@ -420,6 +467,10 @@ export class MessageBuilder extends EventBus {
     messaging.peerSocket.send(buf.buffer)
   }
 
+  /**
+   * 通过判断 isDevice，来确认要绑定的发送函数
+   * @returns 
+   */
   getSafeSend() {
     if (this.isDevice) {
       return this.sendBin.bind(this)
